@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KMUTNB Smart Schedule & Grade</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary: #e67e22; 
+            --primary-dark: #d35400;
+            --bg-color: #f5f7fb;
+            --card-bg: #ffffff;
+            --text-main: #2c3e50;
+            --text-muted: #7f8c8d;
+            
+            --mon: #f1c40f;
+            --tue: #e84393;
+            --wed: #2ecc71;
+            --thu: #e67e22;
+            --fri: #3498db;
+            --sat: #9b59b6;
+            --sun: #e74c3c;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Kanit', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            padding-bottom: 80px;
+        }
+
+        /* App Header */
+        .app-header {
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            color: white;
+            padding: 15px;
+            border-bottom-left-radius: 20px;
+            border-bottom-right-radius: 20px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .profile-section { display: flex; align-items: center; gap: 12px; }
+        .avatar { width: 40px; height: 40px; border-radius: 50%; background-color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 18px; border: 2px solid white; }
+        .user-info h2 { font-size: 15px; font-weight: 500; }
+        .user-info p { font-size: 11px; color: #bdc3c7; }
+
+        .container { padding: 15px; max-width: 600px; margin: 0 auto; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Status Banner */
+        .status-banner { background: white; border-radius: 12px; padding: 12px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border-left: 5px solid var(--primary); }
+        .status-banner h3 { font-size: 16px; margin-bottom: 2px; }
+        .status-banner p { font-size: 12px; color: var(--text-muted); }
+
+        /* Class Card */
+        .class-card { background: var(--card-bg); border-radius: 12px; padding: 12px; margin-bottom: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); position: relative; border-left: 6px solid #ccc; }
+        .class-card.monday { border-left-color: var(--mon); }
+        .class-card.tuesday { border-left-color: var(--tue); }
+        .class-card.wednesday { border-left-color: var(--wed); }
+        .class-card.thursday { border-left-color: var(--thu); }
+        .class-card.friday { border-left-color: var(--fri); }
+        .class-card.saturday { border-left-color: var(--sat); }
+
+        .class-time { font-size: 14px; font-weight: 600; color: var(--primary-dark); margin-bottom: 3px; display: flex; align-items: center; gap: 5px; }
+        .class-title { font-size: 14px; font-weight: 500; margin-bottom: 2px; line-height: 1.3; }
+        .class-subtitle { font-size: 12px; color: var(--text-muted); margin-bottom: 6px; line-height: 1.2; }
+        .class-details { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--text-muted); }
+        .class-details span { display: flex; align-items: center; gap: 5px; }
+
+        .badge-moved { background-color: #ffeaa7; color: #d35400; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 500; display: inline-block; margin-bottom: 5px; }
+        .badge-original { background-color: #f1f2f6; color: #57606f; padding: 2px 8px; border-radius: 10px; font-size: 11px; display: inline-block; margin-bottom: 5px; text-decoration: line-through; }
+
+        /* Forms & Buttons */
+        .action-box { background: #fff; padding: 15px; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 15px; }
+        .action-box h4 { font-size: 14px; margin-bottom: 10px; }
+        .form-group { margin-bottom: 10px; }
+        .form-group label { display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px; }
+        .form-control { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; background: #fafafa; }
+        .btn { background-color: var(--primary); color: white; border: none; padding: 10px 15px; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; width: 100%; transition: 0.2s; }
+        .btn:hover { background-color: var(--primary-dark); }
+        .btn-success { background-color: #2ecc71; margin-top: 10px; } .btn-success:hover { background-color: #27ae60; }
+
+        /* Bottom Navigation Bar */
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; height: 60px; background-color: white; display: flex; justify-content: space-around; align-items: center; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); z-index: 1000; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-muted); text-decoration: none; font-size: 10px; gap: 4px; background: none; border: none; cursor: pointer; width: 25%; height: 100%; }
+        .nav-item i { font-size: 18px; }
+        .nav-item.active { color: var(--primary); }
+
+        /* Grade Calculator Specifics */
+        .grade-history { display: flex; justify-content: space-between; background: #2c3e50; color: white; padding: 12px; border-radius: 12px; margin-bottom: 15px; text-align: center; }
+        .grade-history div h4 { font-size: 11px; color: #bdc3c7; font-weight: 400; margin-bottom: 3px; }
+        .grade-history div span { font-size: 18px; font-weight: 600; color: #f1c40f; }
+        .grade-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #eee; }
+        .grade-row:last-child { border-bottom: none; }
+        .grade-course-info { width: 70%; }
+        .grade-course-info strong { font-size: 12px; display: block; color: var(--text-main); }
+        .grade-course-info span { font-size: 10px; color: var(--text-muted); }
+        .grade-select { width: 25%; padding: 4px; border-radius: 6px; border: 1px solid #ccc; font-family: 'Kanit'; font-weight: 600; text-align: center; font-size: 12px; }
+        .result-box { background: #e8f8f5; border: 1px solid #a3e4d7; border-radius: 10px; padding: 12px; text-align: center; margin-top: 15px; display: none; }
+        .result-box.show { display: block; animation: fadeIn 0.3s; }
+        
+        /* Day Simulator */
+        .day-simulator { display: flex; gap: 5px; overflow-x: auto; padding: 5px 0; margin-bottom: 10px; }
+        .sim-btn { padding: 4px 10px; border-radius: 15px; border: 1px solid #ddd; background: white; font-size: 11px; white-space: nowrap; cursor: pointer; }
+        .sim-btn.active { background-color: #2c3e50; color: white; border-color: #2c3e50; }
+        .no-class { text-align: center; padding: 30px 15px; color: var(--text-muted); background: white; border-radius: 12px; }
+        .no-class i { font-size: 40px; color: #dcdde1; margin-bottom: 10px; }
+
+        /* ================= COMPACT TIMETABLE GRID ================= */
+        .timetable { display: grid; grid-template-columns: 35px repeat(8, 1fr); gap: 1px; background-color: #ddd; border: 1px solid #ddd; border-radius: 8px; overflow: hidden; margin-top: 10px; }
+        .tt-cell { background-color: white; font-size: 8px; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 40px; padding: 2px; word-break: break-word; }
+        .tt-header { background-color: #2c3e50; color: white; font-weight: 500; min-height: 25px; font-size: 9px; }
+        .tt-day { background-color: #f8f9fa; font-weight: 600; color: #2c3e50; font-size: 10px; }
+        .tt-break { background-color: #f1f2f6; color: #aaa; }
+        .tt-class { color: white; border-radius: 4px; margin: 1px; font-weight: 500; line-height: 1.2; padding: 3px 2px; width: 95%; height: 95%; }
+        .tt-room { font-size: 7px; font-weight: 300; margin-top: 2px; opacity: 0.9; }
+
+        /* สีวิชา */
+        .c-mon { background-color: #e67e22; }
+        .c-tue1 { background-color: #e84393; }
+        .c-tue2 { background-color: #fd79a8; }
+        .c-wed { background-color: #2ecc71; }
+        .c-thu { background-color: #d35400; }
+        .c-fri { background-color: #3498db; }
+
+        /* List วิชาขนาดย่อใต้ตาราง */
+        .course-list-item { background: white; border-radius: 8px; padding: 12px; margin-bottom: 10px; border-left: 4px solid #ccc; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .course-list-item h5 { font-size: 13px; font-weight: 600; color: var(--text-main); margin-bottom: 4px; line-height: 1.4; }
+        .course-list-item p { font-size: 11px; color: var(--text-muted); margin-bottom: 0; line-height: 1.6; }
+    </style>
+</head>
+<body>
+
+    <div class="app-header">
+        <div class="profile-section">
+            <div class="avatar"><i class="fa-solid fa-user-graduate"></i></div>
+            <div class="user-info">
+                <h2>นายภูริณัฐ ยวนหลี</h2>
+                <p>ปีการศึกษา 2569 | ภาคเรียนที่ 1 (มจพ.)</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+
+        <div id="today-tab" class="tab-content active">
+            <div class="status-banner">
+                <h3 id="current-day-title">กำลังโหลด...</h3>
+                <p id="today-summary">เช็คตารางเรียนและห้องเรียนของคุณได้ที่นี่</p>
+            </div>
+
+            <div class="day-simulator">
+                <button class="sim-btn" onclick="simulateDay(1)">จันทร์</button>
+                <button class="sim-btn" onclick="simulateDay(2)">อังคาร</button>
+                <button class="sim-btn" onclick="simulateDay(3)">พุธ</button>
+                <button class="sim-btn" onclick="simulateDay(4)">พฤหัสฯ</button>
+                <button class="sim-btn" onclick="simulateDay(5)">ศุกร์</button>
+                <button class="sim-btn" onclick="simulateDay(6)">เสาร์</button>
+                <button class="sim-btn" onclick="simulateDay(0)">อาทิตย์</button>
+            </div>
+
+            <div id="today-classes-list"></div>
+        </div>
+
+        <div id="weekly-tab" class="tab-content">
+            <div class="status-banner">
+                <h3>ตารางเรียนรวม (16 หน่วยกิต)</h3>
+                <p>ตารางภาพรวม และรายละเอียดรายวิชา</p>
+            </div>
+
+            <div class="timetable">
+                <div class="tt-cell tt-header">วัน</div>
+                <div class="tt-cell tt-header">9-10</div><div class="tt-cell tt-header">10-11</div>
+                <div class="tt-cell tt-header">11-12</div><div class="tt-cell tt-header">12-13</div>
+                <div class="tt-cell tt-header">13-14</div><div class="tt-cell tt-header">14-15</div>
+                <div class="tt-cell tt-header">15-16</div><div class="tt-cell tt-header">16-17</div>
+
+                <div class="tt-cell tt-day" style="color: #d4ac0d;">จ.</div>
+                <div class="tt-cell" style="grid-column: span 3;"></div>
+                <div class="tt-cell tt-break"></div>
+                <div class="tt-cell" style="grid-column: span 3;"><div class="tt-class c-mon">Adv. Network<div class="tt-room">1-B3-07</div></div></div>
+                <div class="tt-cell"></div>
+
+                <div class="tt-cell tt-day" style="color: var(--tue);">อ.</div>
+                <div class="tt-cell" style="grid-column: span 3;"><div class="tt-class c-tue1">UX/UI Design<div class="tt-room">1-B4-01-A</div></div></div>
+                <div class="tt-cell tt-break"></div>
+                <div class="tt-cell" style="grid-column: span 2;"><div class="tt-class c-tue2">Machine Learn<div class="tt-room">1-B4-01-B</div></div></div>
+                <div class="tt-cell" style="grid-column: span 2;"><div class="tt-class c-tue2">ML (Lab)<div class="tt-room">1-B4-01-B</div></div></div>
+
+                <div class="tt-cell tt-day" style="color: #1e8449;">พ.</div>
+                <div class="tt-cell" style="grid-column: span 3;"><div class="tt-class c-wed">Net Lab I<div class="tt-room">1-B4-15</div></div></div>
+                <div class="tt-cell tt-break"></div>
+                <div class="tt-cell" style="grid-column: span 4;"></div>
+
+                <div class="tt-cell tt-day" style="color: var(--thu);">พฤ.</div>
+                <div class="tt-cell" style="grid-column: span 3;"></div>
+                <div class="tt-cell tt-break"></div>
+                <div class="tt-cell" style="grid-column: span 2;"><div class="tt-class c-thu">Cloud Infra<div class="tt-room">1-B4-09</div></div></div>
+                <div class="tt-cell" style="grid-column: span 2;"><div class="tt-class c-thu">Cloud (Lab)<div class="tt-room">1-B4-09</div></div></div>
+
+                <div class="tt-cell tt-day" style="color: var(--fri);">ศ.</div>
+                <div class="tt-cell" style="grid-column: span 3;"><div class="tt-class c-fri">Design Think<div class="tt-room">POUNGKAM1</div></div></div>
+                <div class="tt-cell tt-break"></div>
+                <div class="tt-cell" style="grid-column: span 4;"></div>
+            </div>
+            
+            <div style="margin-top: 25px;">
+                <h4 style="font-size: 14px; margin-bottom: 12px; color: var(--text-main); border-bottom: 2px solid #ddd; padding-bottom: 5px;">
+                    <i class="fa-solid fa-list-ul" style="color: var(--primary);"></i> รายละเอียดรายวิชา
+                </h4>
+                
+                <div class="course-list-item" style="border-left-color: #e67e22;">
+                    <h5>060233205 เครือข่ายขั้นสูงและโปรโตคอล</h5>
+                    <p>
+                        <strong style="color: #34495e;">Advanced Network and Protocol</strong><br>
+                        หน่วยกิต: 3(3-0-6)<br>
+                        <i class="fa-solid fa-user-tie"></i> ผศ.ดร.ขนิษฐา นามี | <i class="fa-solid fa-location-dot"></i> 1-B3-07
+                    </p>
+                </div>
+                
+                <div class="course-list-item" style="border-left-color: #e84393;">
+                    <h5>060233316 การออกแบบซอฟต์แวร์ตามประสบการณ์และปฏิสัมพันธ์กับผู้ใช้งาน</h5>
+                    <p>
+                        <strong style="color: #34495e;">UX/UI Software Design</strong><br>
+                        หน่วยกิต: 3(3-0-6)<br>
+                        <i class="fa-solid fa-user-tie"></i> ผศ.ดร.นีสุดา ดาวเรือง | <i class="fa-solid fa-location-dot"></i> 1-B4-01-A
+                    </p>
+                </div>
+                
+                <div class="course-list-item" style="border-left-color: #fd79a8;">
+                    <h5>060233207 การประยุกต์ใช้การเรียนรู้ของเครื่องจักร</h5>
+                    <p>
+                        <strong style="color: #34495e;">Applied Machine Learning</strong><br>
+                        หน่วยกิต: 3(2-2-5)<br>
+                        <i class="fa-solid fa-user-tie"></i> ผศ.ดร.วันทนี ประจวบศุภกิจ | <i class="fa-solid fa-location-dot"></i> 1-B4-01-B
+                    </p>
+                </div>
+                
+                <div class="course-list-item" style="border-left-color: #2ecc71;">
+                    <h5>060233215 ปฏิบัติการวิศวกรรมสารสนเทศและเครือข่าย 1</h5>
+                    <p>
+                        <strong style="color: #34495e;">Information and Network Engineering Laboratory I</strong><br>
+                        หน่วยกิต: 1(0-3-1)<br>
+                        <i class="fa-solid fa-user-tie"></i> อ.ดร.วัชรชัย คงศิริวัฒนา | <i class="fa-solid fa-location-dot"></i> 1-B4-15
+                    </p>
+                </div>
+                
+                <div class="course-list-item" style="border-left-color: #d35400;">
+                    <h5>060233218 โครงสร้างพื้นฐานคลาวด์สำหรับซอฟต์แวร์และบริการ</h5>
+                    <p>
+                        <strong style="color: #34495e;">Cloud Infrastructure for Software and Service</strong><br>
+                        หน่วยกิต: 3(2-2-5)<br>
+                        <i class="fa-solid fa-user-tie"></i> ผศ.ดร.ศรายุทธ ธเนศสกุลวัฒนา | <i class="fa-solid fa-location-dot"></i> 1-B4-09
+                    </p>
+                </div>
+
+                <div class="course-list-item" style="border-left-color: #3498db;">
+                    <h5>080303701 กระบวนการคิดเชิงออกแบบ</h5>
+                    <p>
+                        <strong style="color: #34495e;">Design Thinking</strong><br>
+                        หน่วยกิต: 3(3-0-6)<br>
+                        <i class="fa-solid fa-user-tie"></i> อ.เนศพล คล้ายแขก | <i class="fa-solid fa-location-dot"></i> อาคาร 1-POUNGKAM1
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div id="special-tab" class="tab-content">
+            <div class="status-banner" style="border-left-color: var(--sat);">
+                <h3>ตารางสัปดาห์พิเศษ / เลื่อนคลาส</h3>
+                <p>บันทึกคลาสที่อาจารย์ขอเลื่อนเฉพาะสัปดาห์นี้</p>
+            </div>
+
+            <div class="action-box">
+                <h4><i class="fa-solid fa-calendar-plus" style="color: var(--primary);"></i> เพิ่มคลาสชดเชย</h4>
+                <div class="form-group">
+                    <label>วิชาที่ต้องการเลื่อน</label>
+                    <select id="move-course" class="form-control">
+                        <option value="060233205 เครือข่ายขั้นสูง (Adv. Network)">060233205 เครือข่ายขั้นสูง (Adv. Network)</option>
+                        <option value="060233316 UX/UI Design">060233316 UX/UI Design</option>
+                        <option value="060233207 Machine Learning">060233207 Machine Learning</option>
+                        <option value="060233215 ปฏิบัติการเครือข่าย 1 (Lab)">060233215 ปฏิบัติการเครือข่าย 1 (Lab)</option>
+                        <option value="060233218 โครงสร้างพื้นฐานคลาวด์">060233218 โครงสร้างพื้นฐานคลาวด์</option>
+                        <option value="080303701 กระบวนการคิดเชิงออกแบบ">080303701 กระบวนการคิดเชิงออกแบบ</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>ย้ายไปเรียนวันไหน?</label>
+                    <select id="move-day" class="form-control">
+                        <option value="6">วันเสาร์</option>
+                        <option value="1">วันจันทร์</option><option value="2">วันอังคาร</option>
+                        <option value="3">วันพุธ</option><option value="4">วันพฤหัสบดี</option>
+                        <option value="5">วันศุกร์</option><option value="0">วันอาทิตย์</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>เวลาเรียนใหม่</label>
+                    <input type="text" id="move-time" class="form-control" value="09:00 - 13:00">
+                </div>
+                <button class="btn" onclick="addNewOverride()">บันทึกคลาสเลื่อน</button>
+            </div>
+            <h3>รายการเลื่อนสอนสัปดาห์นี้:</h3>
+            <div id="special-classes-list" style="margin-top: 10px;"></div>
+        </div>
+
+        <div id="grade-tab" class="tab-content">
+            <div class="status-banner" style="border-left-color: #2ecc71;">
+                <h3>ระบบจำลองและคำนวณเกรด</h3>
+                <p>วางแผนเกรดสำหรับภาคเรียนที่ 1 ปีการศึกษา 2569</p>
+            </div>
+            <div class="grade-history">
+                <div><h4>ปี 1 เทอม 1</h4><span>3.41</span></div>
+                <div><h4>ปี 1 เทอม 2</h4><span>3.75</span></div>
+                <div style="border-left: 1px solid #7f8c8d; padding-left: 15px;"><h4>CGPA (สะสม)</h4><span style="color: #2ecc71;">3.58</span></div>
+            </div>
+
+            <div class="action-box">
+                <h4><i class="fa-solid fa-calculator" style="color: #2ecc71;"></i> คาดการณ์เกรดเทอมนี้</h4>
+                
+                <div class="grade-row">
+                    <div class="grade-course-info"><strong>060233205 Adv. Network</strong><span>3 หน่วยกิต</span></div>
+                    <select class="grade-select" id="grade-1" data-credit="3">
+                        <option value="4">A</option><option value="3.5">B+</option><option value="3">B</option>
+                        <option value="2.5">C+</option><option value="2">C</option><option value="1.5">D+</option><option value="1">D</option><option value="0">F</option>
+                    </select>
+                </div>
+                <div class="grade-row">
+                    <div class="grade-course-info"><strong>060233207 Machine Learning</strong><span>3 หน่วยกิต</span></div>
+                    <select class="grade-select" id="grade-2" data-credit="3">
+                        <option value="4">A</option><option value="3.5">B+</option><option value="3">B</option>
+                        <option value="2.5">C+</option><option value="2">C</option><option value="1.5">D+</option><option value="1">D</option><option value="0">F</option>
+                    </select>
+                </div>
+                <div class="grade-row">
+                    <div class="grade-course-info"><strong>060233218 Cloud Infra</strong><span>3 หน่วยกิต</span></div>
+                    <select class="grade-select" id="grade-3" data-credit="3">
+                        <option value="4">A</option><option value="3.5">B+</option><option value="3">B</option>
+                        <option value="2.5">C+</option><option value="2">C</option><option value="1.5">D+</option><option value="1">D</option><option value="0">F</option>
+                    </select>
+                </div>
+                <div class="grade-row">
+                    <div class="grade-course-info"><strong>060233316 UX/UI Design</strong><span>3 หน่วยกิต</span></div>
+                    <select class="grade-select" id="grade-4" data-credit="3">
+                        <option value="4">A</option><option value="3.5">B+</option><option value="3">B</option>
+                        <option value="2.5">C+</option><option value="2">C</option><option value="1.5">D+</option><option value="1">D</option><option value="0">F</option>
+                    </select>
+                </div>
+                <div class="grade-row">
+                    <div class="grade-course-info"><strong>080303701 Design Thinking</strong><span>3 หน่วยกิต</span></div>
+                    <select class="grade-select" id="grade-5" data-credit="3">
+                        <option value="4">A</option><option value="3.5">B+</option><option value="3">B</option>
+                        <option value="2.5">C+</option><option value="2">C</option><option value="1.5">D+</option><option value="1">D</option><option value="0">F</option>
+                    </select>
+                </div>
+                <div class="grade-row">
+                    <div class="grade-course-info"><strong>060233215 Info & Net Eng Lab</strong><span>1 หน่วยกิต</span></div>
+                    <select class="grade-select" id="grade-6" data-credit="1">
+                        <option value="4">A</option><option value="3.5">B+</option><option value="3">B</option>
+                        <option value="2.5">C+</option><option value="2">C</option><option value="1.5">D+</option><option value="1">D</option><option value="0">F</option>
+                    </select>
+                </div>
+
+                <button class="btn btn-success" onclick="calculateGPA()">คำนวณเกรด</button>
+
+                <div id="gpa-result" class="result-box">
+                    <h3 style="color: #2c3e50; margin-bottom: 5px;">ผลลัพธ์การคำนวณ</h3>
+                    <p style="font-size: 13px; margin-bottom: 5px;">GPA ประจำเทอมนี้: <strong style="font-size: 16px; color: #2980b9;" id="term-gpa">0.00</strong></p>
+                    <p style="font-size: 13px;">GPA สะสมใหม่ (CGPA): <strong style="font-size: 18px; color: #27ae60;" id="new-cgpa">0.00</strong></p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="bottom-nav">
+        <button id="nav-today" class="nav-item active" onclick="switchTab('today')">
+            <i class="fa-solid fa-calendar-day"></i><span>วันนี้</span>
+        </button>
+        <button id="nav-weekly" class="nav-item" onclick="switchTab('weekly')">
+            <i class="fa-solid fa-table-cells"></i><span>ตารางรวม</span>
+        </button>
+        <button id="nav-special" class="nav-item" onclick="switchTab('special')">
+            <i class="fa-solid fa-clock-rotate-left"></i><span>ชดเชย</span>
+        </button>
+        <button id="nav-grade" class="nav-item" onclick="switchTab('grade')">
+            <i class="fa-solid fa-graduation-cap"></i><span>เกรด</span>
+        </button>
+    </div>
+
+    <script>
+        const masterSchedule = {
+            1: [{ code: "060233205", name: "เครือข่ายขั้นสูงและโปรโตคอล", sub: "3(3-0-6) • ผศ.ดร.ขนิษฐา นามี", time: "13:00 - 16:00", room: "1-B3-07", cssClass: "monday" }],
+            2: [
+                { code: "060233316", name: "การออกแบบซอฟต์แวร์ตามประสบการณ์และปฏิสัมพันธ์กับผู้ใช้งาน", sub: "3(3-0-6) • ผศ.ดร.นีสุดา ดาวเรือง", time: "09:00 - 12:00", room: "1-B4-01-A", cssClass: "tuesday" },
+                { code: "060233207", name: "การประยุกต์ใช้การเรียนรู้ของเครื่องจักร", sub: "3(2-2-5) • ผศ.ดร.วันทนี ประจวบศุภกิจ", time: "13:00 - 15:00", room: "1-B4-01-B", cssClass: "tuesday" },
+                { code: "060233207-L", name: "การประยุกต์ใช้การเรียนรู้ของเครื่องจักร (Lab)", sub: "3(2-2-5) • ผศ.ดร.วันทนี ประจวบศุภกิจ", time: "15:00 - 17:00", room: "1-B4-01-B", cssClass: "tuesday" }
+            ],
+            3: [{ code: "060233215", name: "ปฏิบัติการวิศวกรรมสารสนเทศและเครือข่าย 1", sub: "1(0-3-1) • อ.ดร.วัชรชัย คงศิริวัฒนา", time: "09:00 - 12:00", room: "1-B4-15", cssClass: "wednesday" }],
+            4: [
+                { code: "060233218", name: "โครงสร้างพื้นฐานคลาวด์สำหรับซอฟต์แวร์และบริการ", sub: "3(2-2-5) • ผศ.ดร.ศรายุทธ ธเนศสกุลวัฒนา", time: "13:00 - 15:00", room: "1-B4-09", cssClass: "thursday" },
+                { code: "060233218-L", name: "โครงสร้างพื้นฐานคลาวด์สำหรับซอฟต์แวร์และบริการ (Lab)", sub: "3(2-2-5) • ผศ.ดร.ศรายุทธ ธเนศสกุลวัฒนา", time: "15:00 - 17:00", room: "1-B4-09", cssClass: "thursday" }
+            ],
+            5: [{ code: "080303701", name: "กระบวนการคิดเชิงออกแบบ", sub: "3(3-0-6) • อ.เนศพล คล้ายแขก", time: "09:00 - 12:00", room: "1-POUNGKAM1", cssClass: "friday" }],
+            0: [], 6: []
+        };
+
+        let specialOverrides = [];
+        const dayNames = ["วันอาทิตย์", "วันจันทร์", "วันอังคาร", "วันพุธ", "วันพฤหัสบดี", "วันศุกร์", "วันเสาร์"];
+        let currentSimulatedDay = new Date().getDay();
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabName + '-tab').classList.add('active');
+            document.getElementById('nav-' + tabName).classList.add('active');
+            if(tabName === 'today') renderTodaySchedule(currentSimulatedDay);
+            if(tabName === 'special') renderSpecialTab();
+        }
+
+        function simulateDay(dayIndex) {
+            currentSimulatedDay = dayIndex;
+            document.querySelectorAll('.sim-btn').forEach((btn, idx) => {
+                if(idx === (dayIndex === 0 ? 6 : dayIndex - 1)) btn.classList.add('active');
+                else btn.classList.remove('active');
+            });
+            if(dayIndex === 0) document.querySelectorAll('.sim-btn')[6].classList.add('active');
+            renderTodaySchedule(dayIndex);
+        }
+
+        function renderTodaySchedule(dayNum) {
+            const titleEl = document.getElementById('current-day-title');
+            const summaryEl = document.getElementById('today-summary');
+            const listContainer = document.getElementById('today-classes-list');
+            
+            titleEl.innerText = `สถานะระบบ: ${dayNames[dayNum]}`;
+            listContainer.innerHTML = '';
+            let finalClasses = [];
+            let originalClasses = masterSchedule[dayNum] ? [...masterSchedule[dayNum]] : [];
+
+            originalClasses.forEach(item => {
+                let isMovedOut = specialOverrides.some(ov => ov.originalDay === dayNum && ov.courseName.includes(item.code.substring(0,6)));
+                if (isMovedOut) {
+                    listContainer.innerHTML += `<div class="class-card ${item.cssClass}" style="opacity: 0.6; background-color: #fafafa;"><div class="badge-original">เดิมเวลา ${item.time}</div><div class="class-title" style="text-decoration: line-through;">${item.name}</div><div style="color: #e74c3c; font-size: 12px; font-weight: 500;"><i class="fa-solid fa-circle-exclamation"></i> คลาสนี้ถูกเลื่อนไปวันอื่น</div></div>`;
+                } else finalClasses.push({ ...item, isOverride: false });
+            });
+
+            let overridesComingIn = specialOverrides.filter(ov => ov.targetDay === dayNum);
+            overridesComingIn.forEach(ov => finalClasses.push({ code: "SPECIAL", name: ov.courseName, sub: ov.note, time: ov.time, room: ov.room, cssClass: ov.cssClass, isOverride: true }));
+
+            if(finalClasses.length === 0 && listContainer.innerHTML === '') {
+                summaryEl.innerText = "วันนี้ไม่มีเรียน! พักผ่อนให้เต็มที่";
+                listContainer.innerHTML = `<div class="no-class"><i class="fa-regular fa-calendar-check"></i><p>ไม่มีเรียนใน${dayNames[dayNum]}</p></div>`;
+                return;
+            }
+
+            summaryEl.innerText = `คุณมีกิจกรรมการเรียน ${finalClasses.length + (originalClasses.length - finalClasses.length)} รายการในวันนี้`;
+            finalClasses.forEach(c => {
+                let badgeHTML = c.isOverride ? `<div class="badge-moved"><i class="fa-solid fa-clock-rotate-left"></i> คลาสย้ายพิเศษ</div>` : '';
+                listContainer.innerHTML += `<div class="class-card ${c.cssClass}">${badgeHTML}<div class="class-time"><i class="fa-regular fa-clock"></i> ${c.time}</div><div class="class-title">${c.name}</div><div class="class-subtitle">${c.sub}</div><div class="class-details"><span><i class="fa-solid fa-location-dot"></i> ${c.room}</span></div></div>`;
+            });
+        }
+
+        function renderSpecialTab() {
+            const container = document.getElementById('special-classes-list');
+            container.innerHTML = '';
+            if(specialOverrides.length === 0) { container.innerHTML = '<p style="color:var(--text-muted); text-align:center; padding: 20px;">ไม่มีคลาสที่ปรับเลื่อนในอาทิตย์นี้</p>'; return; }
+            specialOverrides.forEach((ov, index) => {
+                container.innerHTML += `<div class="class-card ${ov.cssClass}" style="border-left-width: 8px;"><div class="badge-moved"><i class="fa-solid fa-triangle-exclamation"></i> ย้ายจาก: ${dayNames[ov.originalDay]}</div><div class="class-title" style="font-weight: 600;">${ov.courseName}</div><div class="class-time" style="font-size: 13px; margin-top: 5px;"><i class="fa-solid fa-arrow-right"></i> เรียนวันใหม่: ${dayNames[ov.targetDay]} เวลา ${ov.time}</div><button onclick="deleteOverride(${index})" style="background: none; border: none; color: #e74c3c; font-size: 11px; margin-top: 10px; cursor: pointer; float: right;"><i class="fa-solid fa-trash"></i> ลบรายการนี้</button><div style="clear:both;"></div></div>`;
+            });
+        }
+
+        function addNewOverride() {
+            const course = document.getElementById('move-course').value;
+            const targetDay = parseInt(document.getElementById('move-day').value);
+            const time = document.getElementById('move-time').value;
+            
+            let originalDay = 1;
+            if(course.includes("UX/UI") || course.includes("Machine")) originalDay = 2;
+            if(course.includes("ปฏิบัติการเครือข่าย 1")) originalDay = 3;
+            if(course.includes("คลาวด์")) originalDay = 4;
+            if(course.includes("เชิงออกแบบ")) originalDay = 5;
+            
+            const dayToClassMap = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+            specialOverrides.push({ originalDay: originalDay, targetDay: targetDay, courseName: course, time: time, room: "เช็คในกลุ่มวิชา", cssClass: dayToClassMap[targetDay], note: "ชดเชยพิเศษ" });
+            
+            alert("บันทึกการปรับสัปดาห์พิเศษเรียบร้อย!");
+            renderSpecialTab();
+            renderTodaySchedule(currentSimulatedDay);
+        }
+
+        function deleteOverride(index) { specialOverrides.splice(index, 1); renderSpecialTab(); renderTodaySchedule(currentSimulatedDay); }
+
+        function calculateGPA() {
+            let totalNewCredits = 0; let totalGradePoints = 0;
+            for(let i=1; i<=6; i++) {
+                let credit = parseFloat(document.getElementById('grade-'+i).getAttribute('data-credit'));
+                let gradeVal = parseFloat(document.getElementById('grade-'+i).value);
+                totalNewCredits += credit; totalGradePoints += (credit * gradeVal);
+            }
+            let termGPA = totalGradePoints / totalNewCredits;
+            document.getElementById('term-gpa').innerText = termGPA.toFixed(2);
+            let newCGPA = ((36 * 3.58) + totalGradePoints) / (36 + totalNewCredits);
+            document.getElementById('new-cgpa').innerText = newCGPA.toFixed(2);
+            document.getElementById('gpa-result').classList.add('show');
+        }
+
+        window.onload = function() { simulateDay(new Date().getDay()); }
+    </script>
+</body>
+</html>
